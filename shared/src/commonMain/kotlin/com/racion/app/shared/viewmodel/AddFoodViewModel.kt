@@ -5,6 +5,7 @@ import com.racion.app.shared.data.LocalCatalog
 import com.racion.app.shared.models.AppResult
 import com.racion.app.shared.models.FoodProduct
 import com.racion.app.shared.network.FoodCatalogService
+import com.racion.app.shared.state.AppStore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +21,16 @@ data class AddFoodUiState(
     val results: List<FoodProduct> = emptyList(),
     val isLoading: Boolean = false,
     val notice: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val favorites: List<FoodProduct> = emptyList(),
+    /** Últimos productos registrados en el diario, sin repetir ni incluir favoritos. */
+    val recents: List<FoodProduct> = emptyList()
 ) {
+    /** Favoritos y recientes se muestran solo con el buscador vacío y sin filtro. */
+    val showShortcuts: Boolean get() = query.isBlank() && selectedCategory == AddFoodCategory.ALL
+
+    fun isFavorite(product: FoodProduct): Boolean = favorites.any { it.barcode == product.barcode }
+
     val categories: List<String> get() = AddFoodCategory.names
     val isEmpty: Boolean get() = !isLoading && results.isEmpty()
 }
@@ -35,7 +44,8 @@ data class AddFoodUiState(
  */
 class AddFoodViewModel(
     private val catalog: FoodCatalogService,
-    private val localCatalog: LocalCatalog
+    private val localCatalog: LocalCatalog,
+    private val store: AppStore
 ) : RacionViewModel() {
 
     private val _state = MutableStateFlow(
@@ -45,6 +55,23 @@ class AddFoodViewModel(
 
     private var baseResults: List<FoodProduct> = localCatalog.all
     private var searchJob: Job? = null
+
+    init {
+        scope.launch {
+            store.state.collect { app ->
+                val favoriteCodes = app.favorites.map { it.barcode }.toSet()
+                val recents = app.entries
+                    .sortedByDescending { it.loggedAtEpochMillis }
+                    .map { it.product }
+                    .distinctBy { it.barcode }
+                    .filterNot { it.barcode in favoriteCodes }
+                    .take(RECENTS_LIMIT)
+                _state.update { it.copy(favorites = app.favorites, recents = recents) }
+            }
+        }
+    }
+
+    fun toggleFavorite(product: FoodProduct) = store.toggleFavorite(product)
 
     fun onQueryChange(value: String) {
         _state.update { it.copy(query = value) }
@@ -129,5 +156,6 @@ class AddFoodViewModel(
 
     companion object {
         const val DEBOUNCE_MS: Long = 350
+        const val RECENTS_LIMIT = 6
     }
 }

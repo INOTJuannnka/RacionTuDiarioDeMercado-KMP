@@ -9,6 +9,9 @@ import com.racion.app.shared.network.FirebaseAuthService
 import com.racion.app.shared.network.FirestoreDiaryService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import com.racion.app.shared.models.NutritionGoals
+import com.racion.app.shared.models.UserProfile
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -53,18 +56,49 @@ class DiarySync(
                 // Así el diario de demo o de otra cuenta no termina en esta cuenta.
                 groupByDay(store.state.value.entries).forEach { (day, entries) -> synced.putIfAbsent(day, entries) }
 
-                store.state.map { it.entries }.distinctUntilChanged().collect { entries ->
-                    val local = groupByDay(entries)
-                    for (day in local.keys + synced.keys) {
-                        val current = local[day].orEmpty()
-                        if (current == synced[day].orEmpty()) continue
-                        // shortcut: un día que falla al subir se reintenta solo con el próximo cambio; agregar cola offline si hace falta.
-                        if (authorized { cloud.saveDay(uid, it, day, current) } is AppResult.Success) {
-                            synced[day] = current
-                        }
-                    }
+                coroutineScope {
+                    launch { syncMeta(uid) }
+                    syncDiary(uid)
                 }
             }
+    }
+
+    private suspend fun syncDiary(uid: String) {
+        store.state.map { it.entries }.distinctUntilChanged().collect { entries ->
+            val local = groupByDay(entries)
+            for (day in local.keys + synced.keys) {
+                val current = local[day].orEmpty()
+                if (current == synced[day].orEmpty()) continue
+                // shortcut: un día que falla al subir se reintenta solo con el próximo cambio; agregar cola offline si hace falta.
+                if (authorized { cloud.saveDay(uid, it, day, current) } is AppResult.Success) {
+                    synced[day] = current
+                }
+            }
+        }
+    }
+
+    /**
+     * Metas y perfil: lo de la nube gana al iniciar sesión; si la cuenta aún no tiene, se
+     * sube lo del dispositivo. Después se sube cada cambio.
+     */
+    private suspend fun syncMeta(uid: String) {
+        val goals = authorized { cloud.fetchDoc(uid, it, GOALS, NutritionGoals.serializer()) }
+        val profile = authorized { cloud.fetchDoc(uid, it, PROFILE, UserProfile.serializer()) }
+        if (goals is AppResult.Success && profile is AppResult.Success) {
+            store.applyRemoteMeta(goals.value, profile.value)
+        }
+        // Nube vacía: se sube lo del dispositivo. Lectura fallida: no se pisa la nube hasta el próximo cambio.
+        var lastGoals = if (goals is AppResult.Success) goals.value else store.state.value.goals
+        var lastProfile = if (profile is AppResult.Success) profile.value else store.state.value.profile
+
+        store.state.map { it.goals to it.profile }.distinctUntilChanged().collect { (g, p) ->
+            if (g != lastGoals && authorized { cloud.saveDoc(uid, it, GOALS, NutritionGoals.serializer(), g) } is AppResult.Success) {
+                lastGoals = g
+            }
+            if (p != lastProfile && authorized { cloud.saveDoc(uid, it, PROFILE, UserProfile.serializer(), p) } is AppResult.Success) {
+                lastProfile = p
+            }
+        }
     }
 
     /** Ejecuta con el ID token actual; si venció, lo refresca una vez, lo guarda y reintenta. */
@@ -85,6 +119,9 @@ class DiarySync(
     private fun groupByDay(entries: List<DiaryEntry>) = entries.groupBy(::dayKey)
 
     companion object {
+        private const val GOALS = "goals/main"
+        private const val PROFILE = "profile/main"
+
         /** Clave del documento: fecha local `yyyy-MM-dd`. */
         fun dayKey(entry: DiaryEntry): String = AppFormat.localDate(entry.loggedAtEpochMillis).toString()
     }

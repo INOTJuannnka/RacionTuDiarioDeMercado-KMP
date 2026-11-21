@@ -3,6 +3,7 @@ package com.racion.app.shared.persistence
 import com.racion.app.shared.models.AppSettings
 import com.racion.app.shared.models.AuthSession
 import com.racion.app.shared.models.DiaryEntry
+import com.racion.app.shared.models.FoodProduct
 import com.racion.app.shared.models.NutritionGoals
 import com.racion.app.shared.models.UserProfile
 import com.russhwolf.settings.Settings
@@ -31,6 +32,12 @@ class RacionStorage(
     fun loadEntries(): List<DiaryEntry>? = read(KEY_DIARY)
 
     fun saveEntries(entries: List<DiaryEntry>): Boolean = write(KEY_DIARY, entries)
+
+    // MARK: - Favoritos
+
+    fun loadFavorites(): List<FoodProduct>? = read(KEY_FAVORITES)
+
+    fun saveFavorites(favorites: List<FoodProduct>): Boolean = write(KEY_FAVORITES, favorites)
 
     // MARK: - Metas
 
@@ -79,6 +86,7 @@ class RacionStorage(
         const val KEY_PROFILE = "profile.json"
         const val KEY_SETTINGS = "settings.json"
         const val KEY_SESSION = "session.json"
+        const val KEY_FAVORITES = "favorites.json"
 
         /**
          * JSON tolerante: la app evoluciona y un campo nuevo no debe invalidar los

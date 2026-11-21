@@ -48,6 +48,7 @@ import com.racion.app.ui.theme.AppType
 import com.racion.app.ui.theme.ErrorBanner
 import com.racion.app.ui.theme.InfoBanner
 import com.racion.app.ui.theme.LoadingRow
+import com.racion.app.ui.theme.PrimaryButton
 import com.racion.app.ui.theme.RacionDivider
 import com.racion.app.ui.theme.RacionTextField
 import com.racion.app.ui.theme.ScreenContainer
@@ -65,7 +66,8 @@ import com.racion.app.ui.theme.Theme
 @Composable
 fun ScannerContent(
     container: AppContainer,
-    onProductFound: (FoodProduct) -> Unit
+    onProductFound: (FoodProduct) -> Unit,
+    onManualEntry: (barcode: String) -> Unit
 ) {
     val vm = remember { container.scannerViewModel() }
     DisposableEffect(vm) { onDispose { vm.onCleared() } }
@@ -160,6 +162,16 @@ fun ScannerContent(
         if (ui.notice != null) {
             InfoBanner(
                 message = ui.notice.orEmpty(),
+                modifier = Modifier.padding(top = 12.dp)
+            )
+        }
+        ui.notFoundBarcode?.let { code ->
+            PrimaryButton(
+                title = "Cargarlo a mano",
+                onClick = {
+                    vm.clearMessages()
+                    onManualEntry(code)
+                },
                 modifier = Modifier.padding(top = 12.dp)
             )
         }

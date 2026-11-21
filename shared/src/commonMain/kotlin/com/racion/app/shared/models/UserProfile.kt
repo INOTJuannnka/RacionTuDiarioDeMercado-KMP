@@ -1,31 +1,41 @@
 package com.racion.app.shared.models
 
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.json.JsonNames
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 /** Enfoque de entrenamiento elegido en el onboarding. Ajusta las metas sugeridas. */
 @Serializable
+// La versión SwiftUI guardó en Firestore el nombre de la constante ("MONDAY"): se acepta al leer.
+@OptIn(ExperimentalSerializationApi::class)
 enum class SportFocus(
     val emoji: String,
     val title: String,
     val detail: String
 ) {
     @SerialName("futbol")
+    @JsonNames("FUTBOL")
     FUTBOL("⚽️", "Fútbol", "Carga de carbos en días de partido"),
 
     @SerialName("running")
+    @JsonNames("RUNNING")
     RUNNING("🏃", "Running", "Enfoque en resistencia y recuperación"),
 
     @SerialName("fuerza")
+    @JsonNames("FUERZA")
     FUERZA("🏋️", "Fuerza", "Más proteína, superávit moderado"),
 
     @SerialName("ciclismo")
+    @JsonNames("CICLISMO")
     CICLISMO("🚴", "Ciclismo", "Energía sostenida, carbos altos"),
 
     @SerialName("perdidaPeso")
+    @JsonNames("PERDIDA_PESO")
     PERDIDA_PESO("🔥", "Pérdida de peso", "Déficit controlado y gradual"),
 
     @SerialName("mantenimiento")
+    @JsonNames("MANTENIMIENTO")
     MANTENIMIENTO("🌿", "Mantenimiento", "Balance general, sin objetivo específico");
 
     /** `null` significa "mantené los macros actuales". */

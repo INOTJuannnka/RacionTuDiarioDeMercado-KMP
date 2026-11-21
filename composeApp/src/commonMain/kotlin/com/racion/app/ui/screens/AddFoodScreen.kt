@@ -18,6 +18,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,6 +48,7 @@ import com.racion.app.ui.theme.InfoBanner
 import com.racion.app.ui.theme.LoadingRow
 import com.racion.app.ui.theme.PillTab
 import com.racion.app.ui.theme.RacionDivider
+import com.racion.app.ui.theme.SectionLabel
 import com.racion.app.ui.theme.RacionTextField
 import com.racion.app.ui.theme.ScreenContainer
 import com.racion.app.ui.theme.Theme
@@ -157,11 +163,21 @@ fun AddFoodContent(
             )
 
             else -> {
-                ui.results.forEachIndexed { index, food ->
+                val row: @Composable (FoodProduct) -> Unit = { food ->
                     FoodResultRow(
                         food = food,
+                        isFavorite = ui.isFavorite(food),
+                        onToggleFavorite = { vm.toggleFavorite(food) },
                         modifier = Modifier.clickable { onProductSelected(food) }
                     )
+                }
+                if (ui.showShortcuts) {
+                    FoodSection("Favoritos", ui.favorites, row)
+                    FoodSection("Recientes", ui.recents, row)
+                    if (ui.favorites.isNotEmpty() || ui.recents.isNotEmpty()) SectionLabel("Catálogo", Modifier.padding(bottom = 4.dp))
+                }
+                ui.results.forEachIndexed { index, food ->
+                    row(food)
                     if (index != ui.results.lastIndex) RacionDivider()
                 }
             }
@@ -172,8 +188,22 @@ fun AddFoodContent(
 }
 
 @Composable
+private fun FoodSection(title: String, foods: List<FoodProduct>, row: @Composable (FoodProduct) -> Unit) {
+    if (foods.isEmpty()) return
+    SectionLabel(title, Modifier.padding(bottom = 4.dp))
+    foods.forEachIndexed { index, food ->
+        row(food)
+        if (index != foods.lastIndex) RacionDivider()
+    }
+    Spacer(Modifier.height(16.dp))
+}
+
+
+@Composable
 private fun FoodResultRow(
     food: FoodProduct,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Si el fabricante declara porción, se muestra esa base; si no, la única
@@ -233,6 +263,12 @@ private fun FoodResultRow(
             )
         }
 
-        Text("›", style = AppType.headlineMedium, color = Theme.colors.onSurfaceVariant)
+        IconButton(onClick = onToggleFavorite) {
+            Icon(
+                imageVector = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                contentDescription = if (isFavorite) "Quitar de favoritos" else "Agregar a favoritos",
+                tint = if (isFavorite) Theme.colors.primary else Theme.colors.onSurfaceVariant
+            )
+        }
     }
 }

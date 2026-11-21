@@ -1,33 +1,44 @@
 package com.racion.app.shared.models
 
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.json.JsonNames
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 /** Días de la semana con su etiqueta de una letra en español. */
 @Serializable
+// La versión SwiftUI guardó en Firestore el nombre de la constante ("MONDAY"): se acepta al leer.
+@OptIn(ExperimentalSerializationApi::class)
 enum class Weekday(
     val short: String,
     val long: String
 ) {
     @SerialName("monday")
+    @JsonNames("MONDAY")
     MONDAY("L", "Lunes"),
 
     @SerialName("tuesday")
+    @JsonNames("TUESDAY")
     TUESDAY("M", "Martes"),
 
     @SerialName("wednesday")
+    @JsonNames("WEDNESDAY")
     WEDNESDAY("X", "Miércoles"),
 
     @SerialName("thursday")
+    @JsonNames("THURSDAY")
     THURSDAY("J", "Jueves"),
 
     @SerialName("friday")
+    @JsonNames("FRIDAY")
     FRIDAY("V", "Viernes"),
 
     @SerialName("saturday")
+    @JsonNames("SATURDAY")
     SATURDAY("S", "Sábado"),
 
     @SerialName("sunday")
+    @JsonNames("SUNDAY")
     SUNDAY("D", "Domingo");
 
     companion object {

@@ -7,6 +7,7 @@ import com.racion.app.shared.models.AppSettings
 import com.racion.app.shared.models.AuthSession
 import com.racion.app.shared.models.DailySummary
 import com.racion.app.shared.models.DiaryEntry
+import com.racion.app.shared.models.FoodProduct
 import com.racion.app.shared.models.Nutrition
 import com.racion.app.shared.models.NutritionGoals
 import com.racion.app.shared.models.SportFocus
@@ -54,7 +55,8 @@ class AppStore(
                 goals = savedGoals,
                 profile = savedProfile,
                 settings = finalSettings,
-                session = storage.loadSession()
+                session = storage.loadSession(),
+                favorites = storage.loadFavorites().orEmpty()
             )
         )
         state = _state.asStateFlow()
@@ -139,6 +141,22 @@ class AppStore(
     }
 
 
+    // MARK: - Favoritos
+
+    // shortcut: los favoritos no se sincronizan con Firestore; agregar users/{uid}/favorites si se quieren entre dispositivos.
+    fun toggleFavorite(product: FoodProduct) {
+        _state.update { current ->
+            val isFavorite = current.favorites.any { it.barcode == product.barcode }
+            current.copy(
+                favorites = if (isFavorite) current.favorites.filterNot { it.barcode == product.barcode }
+                else listOf(product) + current.favorites
+            )
+        }
+        if (!storage.saveFavorites(_state.value.favorites)) {
+            reportStorageError("No se pudieron guardar tus favoritos.")
+        }
+    }
+
     // MARK: - Metas y perfil
 
     fun saveGoals(newGoals: NutritionGoals) {
@@ -149,6 +167,12 @@ class AppStore(
                 profile = it.profile.copy(currentWeightKg = newGoals.currentWeightKg)
             )
         }
+        persistMeta()
+    }
+
+    /** Metas y perfil bajados de Firestore al iniciar sesión: reemplazan a los del dispositivo. */
+    fun applyRemoteMeta(goals: NutritionGoals?, profile: UserProfile?) {
+        _state.update { it.copy(goals = goals ?: it.goals, profile = profile ?: it.profile) }
         persistMeta()
     }
 

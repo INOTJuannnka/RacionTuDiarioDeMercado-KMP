@@ -51,5 +51,28 @@ data class FoodProduct(
          * 100 g es la única elección honesta porque es la base de [nutritionPer100g].
          */
         const val DEFAULT_SERVING_GRAMS: Double = 100.0
+
+        /**
+         * Producto cargado a mano cuando el código no está en Open Food Facts. La persona
+         * ve la etiqueta "por porción": se guarda como porción de 100 g con esos valores,
+         * así 1 porción en Confirmar muestra exactamente lo que escribió.
+         * Devuelve `null` si falta el nombre o algún número no es válido.
+         */
+        fun manual(barcode: String, name: String, kcal: String, carbs: String, protein: String, fat: String): FoodProduct? {
+            val cleanName = name.trim().takeIf { it.isNotEmpty() } ?: return null
+            fun number(raw: String) = raw.trim().replace(',', '.').ifEmpty { "0" }.toDoubleOrNull()?.takeIf { it >= 0 }
+            return FoodProduct(
+                barcode = barcode.trim(),
+                name = cleanName,
+                brand = "Cargado a mano",
+                servingGrams = DEFAULT_SERVING_GRAMS,
+                nutritionPer100g = Nutrition(
+                    kcal = number(kcal)?.toInt() ?: return null,
+                    carbsG = number(carbs) ?: return null,
+                    proteinG = number(protein) ?: return null,
+                    fatG = number(fat) ?: return null
+                )
+            )
+        }
     }
 }

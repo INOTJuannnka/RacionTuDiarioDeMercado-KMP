@@ -1,5 +1,6 @@
 package com.racion.app.shared.viewmodel
 
+import com.racion.app.shared.models.AppError
 import com.racion.app.shared.data.LocalCatalog
 import com.racion.app.shared.data.SeedData
 import com.racion.app.shared.models.AppResult
@@ -20,6 +21,8 @@ data class ScannerUiState(
     val errorMessage: String? = null,
     val notice: String? = null,
     val foundProduct: FoodProduct? = null,
+    /** Código que Open Food Facts no conoce: la pantalla ofrece cargarlo a mano. */
+    val notFoundBarcode: String? = null,
     val recentScans: List<DiaryEntry> = emptyList()
 )
 
@@ -83,7 +86,7 @@ class ScannerViewModel(
     }
 
     fun clearMessages() {
-        _state.update { it.copy(errorMessage = null, notice = null) }
+        _state.update { it.copy(errorMessage = null, notice = null, notFoundBarcode = null) }
     }
 
     private suspend fun resolve(raw: String, simulated: Boolean = false) {
@@ -93,10 +96,19 @@ class ScannerViewModel(
             return
         }
 
+        // Un producto que ya registraste (incluidos los cargados a mano) se resuelve sin red.
+        val own = store.state.value.let { app -> app.favorites + app.entries.map { it.product } }
+            .firstOrNull { it.barcode == clean }
+        if (own != null) {
+            _state.update { it.copy(barcode = "", foundProduct = own, notFoundBarcode = null) }
+            return
+        }
+
         _state.update {
             it.copy(
                 isLoading = true,
                 errorMessage = null,
+                notFoundBarcode = null,
                 notice = if (simulated) "Lectura simulada · $clean" else null
             )
         }
@@ -120,11 +132,13 @@ class ScannerViewModel(
                         )
                     }
                 } else {
+                    val notFound = result.error == AppError.NotFound
                     _state.update {
                         it.copy(
                             isLoading = false,
                             errorMessage = result.error.userMessage,
-                            notice = "Probá con otro código o revisá la conexión."
+                            notice = if (notFound) null else "Probá con otro código o revisá la conexión.",
+                            notFoundBarcode = if (notFound) clean else null
                         )
                     }
                 }

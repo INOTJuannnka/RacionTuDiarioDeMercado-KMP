@@ -66,7 +66,7 @@ class AppContainer(
 
     fun creditsViewModel(): CreditsViewModel = CreditsViewModel(store)
 
-    fun addFoodViewModel(): AddFoodViewModel = AddFoodViewModel(catalog, localCatalog)
+    fun addFoodViewModel(): AddFoodViewModel = AddFoodViewModel(catalog, localCatalog, store)
 
     fun scannerViewModel(): ScannerViewModel = ScannerViewModel(store, catalog, localCatalog)
 

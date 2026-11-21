@@ -39,6 +39,7 @@ import com.racion.app.ui.screens.DiaryContent
 import com.racion.app.ui.screens.GoalsContent
 import com.racion.app.ui.screens.HomeContent
 import com.racion.app.ui.screens.LoginScreen
+import com.racion.app.ui.screens.ManualProductScreen
 import com.racion.app.ui.screens.OnboardingOverlay
 import com.racion.app.ui.screens.ReportScreen
 import com.racion.app.ui.screens.ScannerContent
@@ -136,7 +137,8 @@ private fun RootTabs(container: AppContainer) {
 
                 RootTab.SCANNER -> ScannerContent(
                     container = container,
-                    onProductFound = { product -> navigator.push(ConfirmScreen(container, product)) }
+                    onProductFound = { product -> navigator.push(ConfirmScreen(container, product)) },
+                    onManualEntry = { code -> navigator.push(ManualProductScreen(container, code)) }
                 )
 
                 RootTab.GOALS -> GoalsContent(

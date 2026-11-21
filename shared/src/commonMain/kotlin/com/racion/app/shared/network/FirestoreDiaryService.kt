@@ -19,6 +19,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.datetime.Clock
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -36,10 +37,11 @@ import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
 
 /**
- * Diario en Cloud Firestore por su API REST: un documento por día y por usuario.
+ * Datos del usuario en Cloud Firestore por su API REST.
  *
- *     users/{uid}/days/{yyyy-MM-dd}
- *       date, entryCount, totalNutrition, updatedAt, entries[]
+ *     users/{uid}/days/{yyyy-MM-dd}   date, entryCount, totalNutrition, updatedAt, entries[]
+ *     users/{uid}/goals/main          NutritionGoals
+ *     users/{uid}/profile/main        UserProfile
  *
  * Las reglas desplegadas solo dejan leer/escribir esa ruta a su dueño
  * (`request.auth.uid == uid`), por eso cada llamada lleva el ID token del usuario.
@@ -59,7 +61,7 @@ class FirestoreDiaryService(
                 bearerAuth(idToken)
                 parameter("pageSize", 300)
             }
-        }.map { body ->
+        }.parse { body ->
             val documents = json.parseToJsonElement(body).jsonObject["documents"]?.jsonArray.orEmpty()
             documents.associate { document ->
                 val day = document.jsonObject.getValue("name").jsonPrimitive.content.substringAfterLast('/')
@@ -90,6 +92,37 @@ class FirestoreDiaryService(
                 setBody(JsonObject(mapOf("fields" to fields)).toString())
             }
         }.map { }
+    }
+
+    /** Un documento suelto (metas, perfil). `null` si todavía no existe. */
+    suspend fun <T> fetchDoc(uid: String, idToken: String, path: String, serializer: KSerializer<T>): AppResult<T?> =
+        request { client.get("$base/users/$uid/$path") { bearerAuth(idToken) } }.parse { body ->
+            json.parseToJsonElement(body).jsonObject["fields"]?.jsonObject
+                ?.let { json.decodeFromJsonElement(serializer, fromFirestoreFields(it)) }
+        }
+
+    suspend fun <T> saveDoc(uid: String, idToken: String, path: String, serializer: KSerializer<T>, value: T): AppResult<Unit> {
+        val fields = toFirestoreFields(json.encodeToJsonElement(serializer, value).jsonObject)
+        return request {
+            client.patch("$base/users/$uid/$path") {
+                bearerAuth(idToken)
+                contentType(ContentType.Application.Json)
+                setBody(JsonObject(mapOf("fields" to fields)).toString())
+            }
+        }.map { }
+    }
+
+    /** Decodifica sin lanzar: un documento con otro formato no debe tumbar la sincronización. */
+    private inline fun <T> AppResult<String>.parse(block: (String) -> T): AppResult<T> = when (this) {
+        is AppResult.Failure -> this
+        is AppResult.Success -> try {
+            AppResult.Success(block(value))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
+            println("RacionFirestore no se pudo leer: ${e.message}")
+            AppResult.Failure(AppError.Decoding)
+        }
     }
 
     /** 401/403 = token vencido o ajeno: quien llama refresca el token y reintenta. */

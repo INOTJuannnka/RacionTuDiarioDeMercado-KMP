@@ -3,6 +3,7 @@ package com.racion.app.shared.state
 import com.racion.app.shared.models.AppSettings
 import com.racion.app.shared.models.AuthSession
 import com.racion.app.shared.models.DiaryEntry
+import com.racion.app.shared.models.FoodProduct
 import com.racion.app.shared.models.NutritionGoals
 import com.racion.app.shared.models.UserProfile
 
@@ -20,6 +21,8 @@ data class AppState(
     val settings: AppSettings = AppSettings(),
     /** `null` = nadie inició sesión: se muestra el login. */
     val session: AuthSession? = null,
+    /** Productos marcados con estrella en "Agregar alimento". Viven en el dispositivo. */
+    val favorites: List<FoodProduct> = emptyList(),
     /**
      * Error de escritura local (disco lleno, cuota). Se muestra como banner y no
      * interrumpe el uso de la app.
