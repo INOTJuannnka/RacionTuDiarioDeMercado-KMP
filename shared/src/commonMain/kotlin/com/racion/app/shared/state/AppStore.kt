@@ -135,6 +135,9 @@ class AppStore(
         updateEntries(updated)
     }
 
+    /** Reemplaza el diario completo (lo usa la sincronización al bajar los días de Firestore). */
+    fun replaceEntries(newEntries: List<DiaryEntry>) = updateEntries(newEntries)
+
     fun clearDiary() {
         updateEntries(emptyList())
     }

@@ -5,6 +5,16 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.QrCodeScanner
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -17,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -53,11 +64,11 @@ class RootScreen(
     }
 }
 
-private enum class RootTab(val label: String, val emoji: String) {
-    HOME("Inicio", "🏠"),
-    DIARY("Diario", "📖"),
-    SCANNER("Escanear", "📷"),
-    GOALS("Perfil", "🎯")
+private enum class RootTab(val label: String, val selectedIcon: ImageVector, val icon: ImageVector) {
+    HOME("Inicio", Icons.Rounded.Home, Icons.Outlined.Home),
+    DIARY("Diario", Icons.AutoMirrored.Rounded.MenuBook, Icons.AutoMirrored.Outlined.MenuBook),
+    SCANNER("Escanear", Icons.Rounded.QrCodeScanner, Icons.Outlined.QrCodeScanner),
+    GOALS("Perfil", Icons.Rounded.Person, Icons.Outlined.Person)
 }
 
 @Composable
@@ -87,7 +98,12 @@ private fun RootTabs(container: AppContainer) {
                     NavigationBarItem(
                         selected = tab == item,
                         onClick = { tab = item },
-                        icon = { Text(item.emoji, style = AppType.body) },
+                        icon = {
+                            Icon(
+                                imageVector = if (tab == item) item.selectedIcon else item.icon,
+                                contentDescription = null // La etiqueta ya nombra la pestaña.
+                            )
+                        },
                         label = { Text(item.label, style = AppType.labelSmall) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Theme.colors.primary,

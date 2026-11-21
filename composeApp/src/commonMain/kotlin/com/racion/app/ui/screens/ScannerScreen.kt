@@ -58,9 +58,9 @@ import com.racion.app.ui.theme.Theme
 /**
  * Pantalla 05 · Escanear.
  *
- * La cámara física no forma parte del módulo compartido: la lectura simulada usa el
- * mismo camino de resolución que un código detectado (`ScannerViewModel.resolve`),
- * incluido el respaldo al catálogo local.
+ * La cámara física vive en `BarcodeCamera` (expect/actual, solo Android por ahora).
+ * La lectura simulada usa el mismo camino de resolución que un código detectado
+ * (`ScannerViewModel.resolve`), incluido el respaldo al catálogo local.
  */
 @Composable
 fun ScannerContent(
@@ -96,7 +96,10 @@ fun ScannerContent(
 
         Spacer(Modifier.height(18.dp))
 
-        Viewfinder(onClick = { vm.simulateScan() })
+        Viewfinder(
+            onClick = { vm.simulateScan() },
+            onCode = { if (!ui.isLoading) vm.handleDetectedCode(it) }
+        )
 
         if (ui.isLoading) {
             LoadingRow(text = "Consultando Open Food Facts…")
@@ -229,11 +232,11 @@ fun ScannerContent(
 /**
  * Visor negro con marco de esquinas amarillas y láser animado.
  *
- * Es decorativo: no abre la cámara (el módulo compartido no depende de APIs de
- * plataforma). Tocar el visor simula una lectura con el producto destacado.
+ * Con cámara (Android) muestra la vista previa debajo del marco y lee códigos reales.
+ * Sin cámara (iOS/Desktop) tocar el visor simula una lectura con el producto destacado.
  */
 @Composable
-private fun Viewfinder(onClick: () -> Unit) {
+private fun Viewfinder(onClick: () -> Unit, onCode: (String) -> Unit) {
     val transition = rememberInfiniteTransition(label = "laser")
     val laserProgress by transition.animateFloat(
         initialValue = 0f,
@@ -256,8 +259,10 @@ private fun Viewfinder(onClick: () -> Unit) {
             .height(280.dp)
             .clip(Theme.largeShape)
             .background(chrome)
-            .clickable(onClick = onClick)
+            .then(if (hasBarcodeCamera) Modifier else Modifier.clickable(onClick = onClick))
     ) {
+        BarcodeCamera(modifier = Modifier.fillMaxSize(), onCode = onCode)
+
         val framePadding = 22.dp
         val travel = (maxHeight - 52.dp).coerceAtLeast(1.dp)
 
@@ -292,7 +297,8 @@ private fun Viewfinder(onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Simulador: tocá el visor para simular una lectura",
+                text = if (hasBarcodeCamera) "Centrá el código de barras en el marco"
+                else "Simulador: tocá el visor para simular una lectura",
                 style = AppType.labelSmall,
                 color = mutedText
             )

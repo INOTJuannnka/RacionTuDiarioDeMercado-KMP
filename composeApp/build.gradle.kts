@@ -34,6 +34,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.animation)
             implementation(compose.ui)
 
@@ -47,6 +48,11 @@ kotlin {
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.play.services)
             implementation(libs.googleid)
+            implementation(libs.camerax.camera2)
+            implementation(libs.camerax.lifecycle)
+            implementation(libs.camerax.view)
+            implementation(libs.camerax.mlkit)
+            implementation(libs.mlkit.barcode)
         }
 
         val desktopMain by getting {

@@ -28,19 +28,18 @@ import kotlinx.coroutines.CancellationException
  */
 class OpenFoodFactsService(
     private val client: HttpClient = defaultHttpClient(),
-    private val baseUrl: String = BASE_URL
+    private val baseUrl: String = BASE_URL,
+    private val searchUrl: String = SEARCH_URL
 ) : FoodCatalogService {
 
     override suspend fun search(query: String): AppResult<List<FoodProduct>> {
         val clean = query.trim()
         if (clean.isEmpty()) return Success(emptyList())
 
+        // `cgi/search.pl` corta con 503 tras ~1 consulta por ráfaga; el buscador nuevo de OFF no.
         val response = execute {
-            client.get("$baseUrl/cgi/search.pl") {
-                parameter("search_terms", clean)
-                parameter("search_simple", "1")
-                parameter("action", "process")
-                parameter("json", "1")
+            client.get("$searchUrl/search") {
+                parameter("q", clean)
                 parameter("page_size", "20")
                 parameter("fields", FIELDS)
             }
@@ -49,7 +48,7 @@ class OpenFoodFactsService(
         response.errorOrNull()?.let { return Failure(it) }
 
         val dto = decode<OffSearchResponse>(response) ?: return Failure(AppError.Decoding)
-        val products = dto.products.orEmpty().mapNotNull { it.toFoodProduct() }
+        val products = dto.hits.orEmpty().mapNotNull { it.toFoodProduct() }
         return Success(products)
     }
 
@@ -113,6 +112,7 @@ class OpenFoodFactsService(
 
     companion object {
         const val BASE_URL = "https://world.openfoodfacts.org"
+        const val SEARCH_URL = "https://search.openfoodfacts.org"
 
         /**
          * Solo se piden los campos que la app usa: el objeto completo trae decenas

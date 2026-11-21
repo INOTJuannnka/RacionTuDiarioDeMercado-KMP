@@ -44,14 +44,14 @@ enum class SportFocus(
 @Serializable
 data class UserProfile(
     val userId: String = "local-user",
-    val displayName: String = "Daniel",
+    val displayName: String = "",
     val sportFocus: SportFocus = SportFocus.MANTENIMIENTO,
     val currentWeightKg: Double = 68.0
 ) {
     companion object {
         val LOCAL_DEFAULT = UserProfile(
             userId = "local-user",
-            displayName = "Daniel",
+            displayName = "",
             sportFocus = SportFocus.RUNNING,
             currentWeightKg = 68.0
         )

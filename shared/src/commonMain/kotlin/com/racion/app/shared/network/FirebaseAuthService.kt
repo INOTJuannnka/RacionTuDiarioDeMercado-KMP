@@ -6,7 +6,10 @@ import com.racion.app.shared.models.AuthProvider
 import com.racion.app.shared.models.AuthSession
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.post
+import io.ktor.http.parameters
+import kotlinx.serialization.SerialName
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -42,6 +45,27 @@ class FirebaseAuthService(
     suspend fun sendPasswordReset(email: String): AppResult<Unit> =
         call("accounts:sendOobCode", OobRequest(email = normalize(email)), AuthProvider.EMAIL).map { }
 
+    /** Cambia el refresh token por un ID token nuevo. Devuelve la sesión con ambos tokens actualizados. */
+    suspend fun refresh(session: AuthSession): AppResult<AuthSession> = try {
+        val response = client.submitForm(
+            url = "https://securetoken.googleapis.com/v1/token?key=$apiKey",
+            formParameters = parameters {
+                append("grant_type", "refresh_token")
+                append("refresh_token", session.refreshToken.orEmpty())
+            }
+        )
+        if (response.status.isSuccess()) {
+            val tokens = response.body<RefreshResponse>()
+            AppResult.Success(session.copy(idToken = tokens.idToken, refreshToken = tokens.refreshToken))
+        } else {
+            AppResult.Failure(AppError.Unauthorized("Tu sesión venció. Iniciá sesión de nuevo."))
+        }
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        AppResult.Failure(AppError.Network)
+    }
+
     private suspend inline fun <reified B : Any> call(
         endpoint: String,
         body: B,
@@ -53,7 +77,9 @@ class FirebaseAuthService(
         }
         if (response.status.isSuccess()) {
             val auth = response.body<AuthResponse>()
-            AppResult.Success(AuthSession(provider, auth.localId, auth.email, auth.displayName))
+            AppResult.Success(
+                AuthSession(provider, auth.localId, auth.email, auth.displayName, auth.idToken, auth.refreshToken)
+            )
         } else {
             val raw = response.bodyAsText()
             println("RacionAuth $endpoint HTTP ${response.status.value}: $raw")
@@ -90,7 +116,15 @@ class FirebaseAuthService(
     private data class AuthResponse(
         val localId: String? = null,
         val email: String? = null,
-        val displayName: String? = null
+        val displayName: String? = null,
+        val idToken: String? = null,
+        val refreshToken: String? = null
+    )
+
+    @Serializable
+    private data class RefreshResponse(
+        @SerialName("id_token") val idToken: String,
+        @SerialName("refresh_token") val refreshToken: String
     )
 
     @Serializable

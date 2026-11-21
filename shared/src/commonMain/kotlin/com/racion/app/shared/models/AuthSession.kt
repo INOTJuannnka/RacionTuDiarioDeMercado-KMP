@@ -15,8 +15,15 @@ data class AuthSession(
     val provider: AuthProvider,
     val userId: String? = null,
     val email: String? = null,
-    val displayName: String? = null
+    val displayName: String? = null,
+    /** Token de Firebase (dura 1 h) para llamar a Firestore como este usuario. */
+    val idToken: String? = null,
+    /** Permite pedir un [idToken] nuevo cuando vence. */
+    val refreshToken: String? = null
 ) {
+    /** Hay cuenta en la nube: el diario se sincroniza con Firestore. */
+    val canSync: Boolean get() = userId != null && refreshToken != null
+
     val label: String
         get() = when (provider) {
             AuthProvider.ANONYMOUS -> "Invitado"

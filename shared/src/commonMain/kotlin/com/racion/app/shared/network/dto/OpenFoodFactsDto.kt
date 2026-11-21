@@ -4,6 +4,11 @@ import com.racion.app.shared.models.FoodProduct
 import com.racion.app.shared.models.Nutrition
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.math.roundToInt
 
 /**
@@ -24,11 +29,11 @@ data class OffProductResponse(
     val product: OffProduct? = null
 )
 
-/** Envelope del endpoint de búsqueda `cgi/search.pl`. */
+/** Envelope de `search.openfoodfacts.org/search`. */
 @Serializable
 data class OffSearchResponse(
     val count: Int? = null,
-    val products: List<OffProduct>? = null
+    val hits: List<OffProduct>? = null
 )
 
 /** Un producto tal como lo entrega cualquiera de los dos endpoints. */
@@ -36,7 +41,8 @@ data class OffSearchResponse(
 data class OffProduct(
     val code: String? = null,
     @SerialName("product_name") val productName: String? = null,
-    val brands: String? = null,
+    /** Texto "A, B" en `/api/v2/product`; lista `["A","B"]` en el buscador. */
+    val brands: JsonElement? = null,
     val quantity: String? = null,
     @SerialName("serving_quantity") val servingQuantity: Double? = null,
     val categories: String? = null,
@@ -77,7 +83,12 @@ fun OffProduct.toFoodProduct(): FoodProduct? {
         .map { it.trim() }
         .filter { it.isNotEmpty() }
 
-    val firstBrand = brands.orEmpty()
+    val brandText = when (val raw = brands) {
+        is JsonArray -> raw.firstOrNull()?.jsonPrimitive?.contentOrNull
+        is JsonPrimitive -> raw.contentOrNull
+        else -> null
+    }
+    val firstBrand = brandText.orEmpty()
         .split(',')
         .firstOrNull()
         ?.trim()

@@ -2,11 +2,13 @@ package com.racion.app.shared.di
 
 import com.racion.app.shared.data.LocalCatalog
 import com.racion.app.shared.network.FirebaseAuthService
+import com.racion.app.shared.network.FirestoreDiaryService
 import com.racion.app.shared.network.FoodCatalogService
 import com.racion.app.shared.network.OpenFoodFactsService
 import com.racion.app.shared.network.defaultHttpClient
 import com.racion.app.shared.persistence.RacionStorage
 import com.racion.app.shared.state.AppStore
+import com.racion.app.shared.state.DiarySync
 import com.racion.app.shared.viewmodel.AddFoodViewModel
 import com.racion.app.shared.viewmodel.ConfirmViewModel
 import com.racion.app.shared.viewmodel.CreditsViewModel
@@ -20,6 +22,10 @@ import com.racion.app.shared.viewmodel.SportProfileViewModel
 import com.racion.app.shared.models.FoodProduct
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 /**
  * Composición raíz de dependencias (el `AppContainer` del proyecto Android).
@@ -38,6 +44,13 @@ class AppContainer(
     val catalog: FoodCatalogService = OpenFoodFactsService(client)
     val store: AppStore = AppStore(storage)
     val auth: FirebaseAuthService = FirebaseAuthService(client)
+
+    /** Vive lo mismo que la app: sincroniza el diario con Firestore en segundo plano. */
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    init {
+        DiarySync(store, auth, FirestoreDiaryService(client)).start(appScope)
+    }
 
     // MARK: - ViewModels
 
@@ -67,6 +80,7 @@ class AppContainer(
      * llama cuando muere la aplicación (o la actividad raíz en Android).
      */
     fun close() {
+        appScope.cancel()
         client.close()
     }
 }

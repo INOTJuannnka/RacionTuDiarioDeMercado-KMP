@@ -53,7 +53,10 @@ class HomeViewModel(
 
     private fun buildState(snapshot: AppState): HomeUiState {
         val summary = store.summary()
-        val name = snapshot.profile.displayName.trim()
+        // Primer nombre de la cuenta (Google) o la parte del correo antes de "@"; el invitado no tiene nombre.
+        val session = snapshot.session
+        val name = session?.displayName?.trim()?.substringBefore(' ')?.takeIf { it.isNotEmpty() }
+            ?: session?.email?.substringBefore('@').orEmpty()
         val remaining = summary.remainingKcal
 
         return HomeUiState(
