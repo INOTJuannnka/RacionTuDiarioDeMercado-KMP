@@ -23,6 +23,7 @@ import com.racion.app.shared.di.AppContainer
 import com.racion.app.ui.theme.AppType
 import com.racion.app.ui.theme.CalorieProgressBar
 import com.racion.app.ui.theme.EmptyState
+import com.racion.app.ui.theme.PrimaryButton
 import com.racion.app.ui.theme.MacroStat
 import com.racion.app.ui.theme.MealRow
 import com.racion.app.ui.theme.OrangeFab
@@ -140,10 +141,16 @@ fun HomeContent(
             Spacer(Modifier.height(12.dp))
 
             if (ui.rows.isEmpty()) {
+                // Sin registros hoy (cuenta nueva o día sin comidas): invitación en lugar de una lista vacía.
                 EmptyState(
                     emoji = "🍽",
-                    title = "Todavía no registraste nada",
-                    message = "Tocá el botón + para buscar un producto o escanear su código de barras."
+                    title = "¡Crea tu primer registro!",
+                    message = "Buscá un producto o escaneá su código de barras."
+                )
+                PrimaryButton(
+                    title = "Agregar comida",
+                    onClick = onAddFood,
+                    modifier = Modifier.padding(top = 12.dp)
                 )
             } else {
                 ui.rows.forEachIndexed { index, row ->

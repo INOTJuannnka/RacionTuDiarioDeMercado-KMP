@@ -38,11 +38,6 @@ class CreditsViewModel(
         store.setDarkMode(enabled)
     }
 
-    fun resetDemoData() {
-        store.resetDemoData()
-        local.update { it.copy(message = "Diario de ejemplo restaurado.") }
-    }
-
     fun clearMessage() {
         local.update { it.copy(message = null) }
     }

@@ -40,17 +40,13 @@ class AppStore(
         val savedProfile = storage.loadProfile() ?: UserProfile.LOCAL_DEFAULT
         var savedEntries = storage.loadEntries().orEmpty()
 
-        // La demo se siembra una única vez. A partir de ahí las entradas son datos
-        // reales del usuario: se pueden borrar y sobreviven a reiniciar la app.
-        val shouldSeed = !savedSettings.hasSeededDemoData
-        if (shouldSeed) {
-            savedEntries = SeedData.demoEntries()
+        // La app ya no siembra un diario de ejemplo: una cuenta nueva arranca vacía.
+        // Si una versión anterior lo sembró, se borra una sola vez.
+        val hadDemo = savedSettings.hasSeededDemoData
+        if (hadDemo) {
+            savedEntries = savedEntries.filterNot { SeedData.isLegacyDemo(it) }
         }
-        val finalSettings = if (shouldSeed) {
-            savedSettings.copy(hasSeededDemoData = true)
-        } else {
-            savedSettings
-        }
+        val finalSettings = savedSettings.copy(hasSeededDemoData = false)
 
         _state = MutableStateFlow(
             AppState(
@@ -63,11 +59,11 @@ class AppStore(
         )
         state = _state.asStateFlow()
 
-        if (shouldSeed) {
+        if (hadDemo) {
             val entriesSaved = storage.saveEntries(savedEntries)
             val settingsSaved = storage.saveSettings(finalSettings)
             if (!entriesSaved || !settingsSaved) {
-                reportStorageError("No se pudieron guardar los datos iniciales.")
+                reportStorageError("No se pudo limpiar el diario de ejemplo.")
             }
         }
     }
@@ -142,21 +138,6 @@ class AppStore(
         updateEntries(emptyList())
     }
 
-    /**
-     * Restaura el diario de demostración sin tocar metas, perfil ni preferencias.
-     * Es la forma de recuperar la demo después de haberla vaciado.
-     */
-    fun resetDemoData() {
-        val seeded = SeedData.demoEntries()
-        _state.update {
-            it.copy(
-                entries = seeded.sortedBy { entry -> entry.loggedAtEpochMillis },
-                settings = it.settings.copy(hasSeededDemoData = true)
-            )
-        }
-        persistDiary()
-        persistSettings()
-    }
 
     // MARK: - Metas y perfil
 

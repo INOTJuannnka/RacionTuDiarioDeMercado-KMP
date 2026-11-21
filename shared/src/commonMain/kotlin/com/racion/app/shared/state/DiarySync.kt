@@ -1,6 +1,7 @@
 package com.racion.app.shared.state
 
 import com.racion.app.shared.data.AppFormat
+import com.racion.app.shared.data.SeedData
 import com.racion.app.shared.models.AppError
 import com.racion.app.shared.models.AppResult
 import com.racion.app.shared.models.DiaryEntry
@@ -41,7 +42,9 @@ class DiarySync(
                 when (val remote = authorized { cloud.fetchDays(uid, it) }) {
                     is AppResult.Success -> {
                         val local = store.state.value.entries.filterNot { dayKey(it) in remote.value }
-                        store.replaceEntries(local + remote.value.values.flatten())
+                        // Días subidos por versiones que sembraban el ejemplo: se limpian y se vuelven a subir abajo.
+                        val cloud = remote.value.values.flatten().filterNot { SeedData.isLegacyDemo(it) }
+                        store.replaceEntries(local + cloud)
                         synced.putAll(remote.value)
                     }
                     is AppResult.Failure -> println("RacionSync no se pudo bajar el diario: ${remote.error}")

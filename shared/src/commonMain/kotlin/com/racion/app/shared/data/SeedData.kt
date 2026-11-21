@@ -164,4 +164,16 @@ object SeedData {
 
         return entries.sortedBy { it.loggedAtEpochMillis }
     }
+
+    /**
+     * Versiones anteriores sembraban [demoEntries] en cada instalación. Se reconoce una
+     * entrada de ejemplo por producto, porciones, comida y hora exacta (p. ej. sancocho
+     * 1 porción, almuerzo, 12:45), que es lo único que la distingue de un registro real.
+     */
+    fun isLegacyDemo(entry: DiaryEntry, timeZone: TimeZone = TimeZone.currentSystemDefault()): Boolean =
+        demoSignature(entry, timeZone) in demoEntries(timeZone = timeZone).map { demoSignature(it, timeZone) }
+
+    private fun demoSignature(entry: DiaryEntry, timeZone: TimeZone) =
+        "${entry.product.barcode}|${entry.servings}|${entry.mealSlot}|" +
+            AppFormat.localDateTime(entry.loggedAtEpochMillis, timeZone).time
 }

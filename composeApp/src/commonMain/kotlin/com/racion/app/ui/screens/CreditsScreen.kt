@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -69,7 +68,6 @@ fun CreditsContent(
     val vm = remember { container.creditsViewModel() }
     DisposableEffect(vm) { onDispose { vm.onCleared() } }
     val ui by vm.state.collectAsState()
-    var showResetConfirmation by remember { mutableStateOf(false) }
 
     LaunchedEffect(ui.message) {
         if (ui.message != null) {
@@ -221,24 +219,6 @@ fun CreditsContent(
             )
         }
 
-        Spacer(Modifier.height(18.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Theme.colors.primaryContainer)
-                .clickable { showResetConfirmation = true },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "↺  Restaurar datos de ejemplo",
-                style = AppType.titleMedium,
-                color = Theme.colors.primary
-            )
-        }
-
         if (ui.message != null) {
             InfoBanner(
                 message = ui.message.orEmpty(),
@@ -247,51 +227,13 @@ fun CreditsContent(
         }
 
         Text(
-            text = "Todos los datos de esta app viven en el dispositivo. No hay backend ni recolección de información personal.",
+            text = "Tu diario se guarda en el dispositivo y, si iniciaste sesión con una cuenta, también en Firebase. No se recolecta otra información personal.",
             style = AppType.bodySmall,
             color = Theme.colors.onSurfaceVariant,
             modifier = Modifier.padding(top = 20.dp, bottom = 24.dp)
         )
     }
 
-    if (showResetConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showResetConfirmation = false },
-            title = { Text("¿Restaurar el diario de ejemplo?", style = AppType.headlineMedium) },
-            text = {
-                Text(
-                    "Se reemplazan las entradas actuales por las de demostración. Tus metas y tu cuenta no se tocan.",
-                    style = AppType.bodyMedium
-                )
-            },
-            confirmButton = {
-                Text(
-                    text = "Restaurar",
-                    style = AppType.titleMedium,
-                    color = Theme.colors.error,
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .clickable {
-                            showResetConfirmation = false
-                            vm.resetDemoData()
-                        }
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                )
-            },
-            dismissButton = {
-                Text(
-                    text = "Cancelar",
-                    style = AppType.titleMedium,
-                    color = Theme.colors.onSurfaceVariant,
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .clickable { showResetConfirmation = false }
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                )
-            },
-            containerColor = Theme.colors.surfaceContainerLowest
-        )
-    }
 }
 
 @Composable
