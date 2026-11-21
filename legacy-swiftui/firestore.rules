@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Reglas de Cloud Firestore para Racion.
+// Cada usuario solo puede leer y escribir sus propios datos (users/{uid}/...).
+// Publicar con: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Diario: una entrada por documento.
+      match /entries/{entryId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Metas (meta/goals) y perfil (meta/profile).
+      match /meta/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Todo lo demás queda denegado por defecto.
+  }
+}

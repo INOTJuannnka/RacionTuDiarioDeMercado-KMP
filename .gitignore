@@ -1,0 +1,32 @@
+# Gradle
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Configuración local (ruta del SDK de Android)
+local.properties
+
+# Kotlin
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# macOS
+.DS_Store
+._*
+
+# Xcode
+DerivedData/
+*.xcuserstate
+iosApp/*.xcodeproj/xcuserdata/
+iosApp/*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Credenciales (Firebase Admin SDK, claves de servicio): NUNCA al repo
+secrets/
+*firebase-adminsdk*.json
+
+xcuserdata/
