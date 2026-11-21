@@ -183,7 +183,7 @@ fun GoalsContent(
             Column(modifier = Modifier.weight(1f)) {
                 Text("Recordatorios", style = AppType.titleMedium)
                 Text(
-                    text = "Un aviso diario para completar el diario",
+                    text = "Un aviso diario a las 20:00 para completar el diario",
                     style = AppType.bodySmall,
                     color = Theme.colors.onSurfaceVariant
                 )

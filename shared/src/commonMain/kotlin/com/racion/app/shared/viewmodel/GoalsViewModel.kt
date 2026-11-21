@@ -82,8 +82,10 @@ class GoalsViewModel(
         }
     }
 
+    /** El switch se aplica al instante (programa o cancela el aviso), sin esperar a "Guardar metas". */
     fun setReminders(enabled: Boolean) {
         local.update { it.copy(remindersEnabled = enabled) }
+        store.setReminders(enabled)
     }
 
     /** Refresca solo lo que viene de afuera, sin pisar los sliders en uso. */

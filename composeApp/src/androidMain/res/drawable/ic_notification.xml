@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Silueta del icono de la app para la barra de estado (Android solo usa el canal alfa). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:scaleX="1.6" android:scaleY="1.6" android:pivotX="54" android:pivotY="54">
+    <!-- Hojas -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M38,53 C35,41 42,32 53,29 C55,40 49,49 38,53 Z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M52,53 C51,41 59,33 71,32 C70,43 63,50 52,53 Z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M46,53 C44,45 47,39 52,36 C55,43 52,50 46,53 Z" />
+    <!-- Tomate cherry -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M64,47 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+    <!-- Bowl -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M29,52 L79,52 Q81,52 81,54 L81,55 Q81,57 79,57 L78.4,57 A24.5,22 0 0,1 29.6,57 L29,57 Q27,57 27,55 L27,54 Q27,52 29,52 Z" />
+    </group>
+</vector>
