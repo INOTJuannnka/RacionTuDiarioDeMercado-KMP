@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="racion_surface">#F7F2E9</color>
+    <!-- Naranja primario del tema (Theme.colors.primary). -->
+    <color name="ic_launcher_background">#E05A2B</color>
 </resources>

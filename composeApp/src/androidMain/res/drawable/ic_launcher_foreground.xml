@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bowl de ensalada (como el logo del login). Lienzo 108x108; todo dentro de la zona segura de 66 dp. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:scaleX="1.15" android:scaleY="1.15" android:pivotX="54" android:pivotY="54">
+    <!-- Hojas -->
+    <path android:fillColor="#3E8E41"
+        android:pathData="M38,53 C35,41 42,32 53,29 C55,40 49,49 38,53 Z" />
+    <path android:fillColor="#7CC36B"
+        android:pathData="M52,53 C51,41 59,33 71,32 C70,43 63,50 52,53 Z" />
+    <path android:fillColor="#5AAE4F"
+        android:pathData="M46,53 C44,45 47,39 52,36 C55,43 52,50 46,53 Z" />
+    <!-- Tomate cherry -->
+    <path android:fillColor="#B3261E"
+        android:pathData="M64,47 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.7"
+        android:pathData="M62,45 m-1.6,0 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0" />
+    <!-- Bowl -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M29,52 L79,52 Q81,52 81,54 L81,55 Q81,57 79,57 L78.4,57 A24.5,22 0 0,1 29.6,57 L29,57 Q27,57 27,55 L27,54 Q27,52 29,52 Z" />
+    <path android:fillColor="#F7D9C9"
+        android:pathData="M33,63 L75,63 Q74,66 72.5,68 L35.5,68 Q34,66 33,63 Z" />
+    </group>
+</vector>
