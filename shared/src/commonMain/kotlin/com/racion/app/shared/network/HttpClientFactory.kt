@@ -31,6 +31,8 @@ fun defaultHttpClient(
                 ignoreUnknownKeys = true
                 isLenient = true
                 explicitNulls = false
+                // Los cuerpos de Firebase Auth llevan valores fijos por defecto (requestUri, requestType).
+                encodeDefaults = true
             }
         )
     }

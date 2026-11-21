@@ -8,6 +8,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
@@ -54,7 +55,9 @@ class FirebaseAuthService(
             val auth = response.body<AuthResponse>()
             AppResult.Success(AuthSession(provider, auth.localId, auth.email, auth.displayName))
         } else {
-            val message = runCatching { response.body<ErrorResponse>().error?.message }.getOrNull()
+            val raw = response.bodyAsText()
+            println("RacionAuth $endpoint HTTP ${response.status.value}: $raw")
+            val message = runCatching { authJson.decodeFromString<ErrorResponse>(raw).error?.message }.getOrNull()
             AppResult.Failure(mapFirebaseError(message))
         }
     } catch (cancelled: CancellationException) {
@@ -97,6 +100,7 @@ class FirebaseAuthService(
     private data class ErrorBody(val message: String? = null)
 
     companion object {
+        private val authJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
         private const val BASE_URL = "https://identitytoolkit.googleapis.com/v1"
 
         // Clave pública de cliente del proyecto `racion-tu-diario-de-mercado` (la misma de
@@ -124,6 +128,6 @@ internal fun mapFirebaseError(code: String?): AppError {
         "OPERATION_NOT_ALLOWED" -> AppError.Unauthorized("Este método de inicio de sesión no está habilitado.")
         "INVALID_IDP_RESPONSE" -> AppError.Unauthorized("Google no validó el inicio de sesión. Intentá de nuevo.")
         "TOO_MANY_ATTEMPTS_TRY_LATER" -> AppError.RateLimited
-        else -> AppError.Unknown(code)
+        else -> AppError.Unauthorized("No se pudo iniciar sesión (${code ?: "sin detalle"}).")
     }
 }
